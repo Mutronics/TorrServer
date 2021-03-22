@@ -64,11 +64,11 @@ func NewTorrent(spec *torrent.TorrentSpec, bt *BTServer) (*Torrent, error) {
 	}
 
 	if settings.BTsets.RetrackersFromNGOSang {
-		rt = append(rt,utils.LoadNGOSang()...)
+		rt = append(rt,utils.LoadFromUrl("https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt")...)
 	}
 
 	if settings.BTsets.RetrackersFromNewTrackon {
-		rt = append(rt,utils.LoadNewTrackon()...)
+		rt = append(rt,utils.LoadNewTrackon("https://newtrackon.com/api/stable")...)
 	}
 
 	spec.Trackers = [][]string{rt}	
