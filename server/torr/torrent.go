@@ -68,7 +68,7 @@ func NewTorrent(spec *torrent.TorrentSpec, bt *BTServer) (*Torrent, error) {
 	}
 
 	if settings.BTsets.RetrackersFromNewTrackon {
-		rt = append(rt,utils.LoadNewTrackon("https://newtrackon.com/api/stable")...)
+		rt = append(rt,utils.LoadFromUrl("https://newtrackon.com/api/stable")...)
 	}
 
 	spec.Trackers = [][]string{rt}	
