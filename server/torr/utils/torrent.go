@@ -11,27 +11,9 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func LoadNewTrackon() []string {
+func LoadFromUrl(url string) []string {
     var ret []string
-    resp, err := http.Get("https://newtrackon.com/api/stable")
-    if err == nil {
-	buf, err := ioutil.ReadAll(resp.Body)
-	if err == nil {
-	    arr := strings.Split(string(buf), "\n")
-	    for _, s := range arr {
-		s = strings.TrimSpace(s)
-		if len(s) > 0 {
-		    ret = append(ret, s)
-		}
-	    }
-	}
-    }
-    return ret
-}
-
-func LoadNGOSang() []string {
-    var ret []string
-    resp, err := http.Get("https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt")
+    resp, err := http.Get(url)
     if err == nil {
 	buf, err := ioutil.ReadAll(resp.Body)
 	if err == nil {
