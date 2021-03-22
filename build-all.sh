@@ -63,7 +63,7 @@ for PLATFORM in $PLATFORMS; do
   echo "${CMD}"
   eval $CMD || FAILURES="${FAILURES} ${PLATFORM}"
 done
-
+exit
 #####################################
 ### Android build section
 #####
