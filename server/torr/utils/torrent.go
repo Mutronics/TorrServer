@@ -6,54 +6,55 @@ import (
 	"math/rand"
 	"net/http"
 	"strings"
-
+	"server/settings"
+	"path/filepath"
 	"golang.org/x/time/rate"
 )
 
-var defTrackers = []string{
-	"http://retracker.local",
-	"http://bt4.t-ru.org/ann?magnet",
-	"http://retracker.mgts.by:80/announce",
-	"http://tracker.city9x.com:2710/announce",
-	"http://tracker.electro-torrent.pl:80/announce",
-	"http://tracker.internetwarriors.net:1337/announce",
-	"http://tracker2.itzmx.com:6961/announce",
-	"udp://opentor.org:2710",
-	"udp://public.popcorn-tracker.org:6969/announce",
-	"udp://tracker.opentrackr.org:1337/announce",
-	"http://bt.svao-ix.ru/announce",
-	"udp://explodie.org:6969/announce",
-}
-
-var loadedTrackers []string
-
-func GetDefTrackers() []string {
-	loadNewTracker()
-	if len(loadedTrackers) == 0 {
-		return defTrackers
-	}
-	return loadedTrackers
-}
-
-func loadNewTracker() {
-	if len(loadedTrackers) > 0 {
-		return
-	}
-	resp, err := http.Get("https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best_ip.txt")
+func LoadNewTrackon() []string {
+    var ret []string
+    resp, err := http.Get("https://newtrackon.com/api/stable")
+    if err == nil {
+	buf, err := ioutil.ReadAll(resp.Body)
 	if err == nil {
-		buf, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			arr := strings.Split(string(buf), "\n")
-			var ret []string
-			for _, s := range arr {
-				s = strings.TrimSpace(s)
-				if len(s) > 0 {
-					ret = append(ret, s)
-				}
-			}
-			loadedTrackers = append(ret, defTrackers...)
+	    arr := strings.Split(string(buf), "\n")
+	    for _, s := range arr {
+		s = strings.TrimSpace(s)
+		if len(s) > 0 {
+		    ret = append(ret, s)
 		}
+	    }
 	}
+    }
+    return ret
+}
+
+func LoadNGOSang() []string {
+    var ret []string
+    resp, err := http.Get("https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best_ip.txt")
+    if err == nil {
+	buf, err := ioutil.ReadAll(resp.Body)
+	if err == nil {
+	    arr := strings.Split(string(buf), "\n")
+	    for _, s := range arr {
+		s = strings.TrimSpace(s)
+		if len(s) > 0 {
+		    ret = append(ret, s)
+		}
+	    }
+	}
+    }
+    return ret
+}
+
+func LoadFromFile() []string {
+    var ret []string
+    ref := filepath.Join(settings.Path, "retrackers.txt")
+    content, err := ioutil.ReadFile(ref)
+    if err == nil {
+	ret = strings.Split(string(content), "\n")
+    }
+    return ret
 }
 
 func PeerIDRandom(peer string) string {
