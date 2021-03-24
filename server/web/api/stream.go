@@ -72,12 +72,6 @@ func stream(c *gin.Context) {
 		data = tor.Data
 	}
 	if tor == nil || tor.Stat == state.TorrentInDB {
-		if title == "" {
-			title = c.Param("fname")
-			title, _ = url.PathUnescape(title)
-			title = strings.TrimLeft(title, "/")
-		}
-
 		tor, err = torr.AddTorrent(spec, title, poster, data)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
@@ -90,6 +84,10 @@ func stream(c *gin.Context) {
 		return
 	}
 
+	if tor.Title == "" {
+		tor.Title = tor.Name()
+	}
+	
 	// save to db
 	if save {
 		torr.SaveTorrentToDB(tor)
@@ -169,12 +167,6 @@ func streamNoAuth(c *gin.Context) {
 		data = tor.Data
 	}
 	if tor == nil || tor.Stat == state.TorrentInDB {
-		if title == "" {
-			title = c.Param("fname")
-			title, _ = url.PathUnescape(title)
-			title = strings.TrimLeft(title, "/")
-		}
-
 		tor, err = torr.AddTorrent(spec, title, poster, data)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
@@ -187,6 +179,10 @@ func streamNoAuth(c *gin.Context) {
 		return
 	}
 
+	if tor.Title == "" {
+		tor.Title = tor.Name()
+	}	
+	
 	// find file
 	index := -1
 	if len(tor.Files()) == 1 {
