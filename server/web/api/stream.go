@@ -7,6 +7,7 @@ import (
 
 	"server/torr"
 	"server/torr/state"
+	utils2 "server/utils"
 	"server/web/api/utils"
 
 	"github.com/gin-gonic/gin"
@@ -87,7 +88,7 @@ func stream(c *gin.Context) {
 	if tor.Title == "" {
 		tor.Title = tor.Name()
 	}
-	
+
 	// save to db
 	if save {
 		torr.SaveTorrentToDB(tor)
@@ -119,7 +120,7 @@ func stream(c *gin.Context) {
 	} else
 	// return m3u if query
 	if m3u {
-		m3ulist := "#EXTM3U\n" + getM3uList(tor.Status(), "http://"+c.Request.Host, fromlast)
+		m3ulist := "#EXTM3U\n" + getM3uList(tor.Status(), utils2.GetScheme(c)+"://"+c.Request.Host, fromlast)
 		sendM3U(c, tor.Name()+".m3u", tor.Hash().HexString(), m3ulist)
 		return
 	} else
@@ -160,7 +161,7 @@ func streamNoAuth(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	
+
 	title = tor.Title
 	poster = tor.Poster
 	data = tor.Data
@@ -177,7 +178,7 @@ func streamNoAuth(c *gin.Context) {
 		c.AbortWithError(http.StatusInternalServerError, errors.New("timeout connection torrent"))
 		return
 	}
-	
+
 	// find file
 	index := -1
 	if len(tor.Files()) == 1 {
@@ -188,7 +189,7 @@ func streamNoAuth(c *gin.Context) {
 			index = ind
 		}
 	}
-	if index == -1 && play { // if file index not set and play file exe
+	if index == -1 && play { // if file index not set and play file exec
 		c.AbortWithError(http.StatusBadRequest, errors.New("\"index\" is empty or wrong"))
 		return
 	}
@@ -199,7 +200,7 @@ func streamNoAuth(c *gin.Context) {
 
 	// return m3u if query
 	if m3u {
-		m3ulist := "#EXTM3U\n" + getM3uList(tor.Status(), "http://"+c.Request.Host, fromlast)
+		m3ulist := "#EXTM3U\n" + getM3uList(tor.Status(), utils2.GetScheme(c)+"://"+c.Request.Host, fromlast)
 		sendM3U(c, tor.Name()+".m3u", tor.Hash().HexString(), m3ulist)
 		return
 	} else
@@ -210,5 +211,5 @@ func streamNoAuth(c *gin.Context) {
 	}
 	c.Header("WWW-Authenticate", "Basic realm=Authorization Required")
 	c.AbortWithStatus(http.StatusUnauthorized)
-	return
+
 }

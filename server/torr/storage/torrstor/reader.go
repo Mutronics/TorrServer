@@ -138,7 +138,7 @@ func (r *Reader) getOffsetRange() (int64, int64) {
 	if time.Now().Unix() > r.lastAccess+60 {
 		return r.file.Offset(), r.file.Offset()
 	}
-	
+
 	prc := int64(settings.BTsets.ReaderReadAHead)
 	readers := int64(len(r.cache.readers))
 	if readers == 0 {

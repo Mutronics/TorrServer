@@ -71,7 +71,7 @@ func NewTorrent(spec *torrent.TorrentSpec, bt *BTServer) (*Torrent, error) {
 		rt = append(rt,utils.LoadFromUrl("https://newtrackon.com/api/stable")...)
 	}
 
-	spec.Trackers = [][]string{rt}	
+	spec.Trackers = [][]string{rt}
 
 	goTorrent, _, err := bt.client.AddTorrentSpec(spec)
 	if err != nil {
@@ -175,7 +175,9 @@ func (t *Torrent) progressEvent() {
 		t.BytesReadUsefulData = st.BytesRead.Int64()
 		t.BytesWrittenData = st.BytesWritten.Int64()
 
-		t.PreloadedBytes = t.cache.GetState().Filled
+		if t.cache != nil {
+			t.PreloadedBytes = t.cache.GetState().Filled
+		}
 	} else {
 		t.DownloadSpeed = 0
 		t.UploadSpeed = 0
@@ -360,9 +362,7 @@ func (t *Torrent) Close() {
 	t.Stat = state.TorrentClosed
 
 	t.bt.mu.Lock()
-	if _, ok := t.bt.torrents[t.Hash()]; ok {
-		delete(t.bt.torrents, t.Hash())
-	}
+	delete(t.bt.torrents, t.Hash())
 	t.bt.mu.Unlock()
 
 	t.drop()

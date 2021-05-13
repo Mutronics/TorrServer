@@ -13,7 +13,6 @@ import (
 	"server/log"
 	"server/settings"
 
-	"github.com/anacrolix/torrent/iplist"
 	"github.com/gin-gonic/gin"
 )
 
@@ -23,21 +22,12 @@ func Blocker() gin.HandlerFunc {
 	}
 
 	name := filepath.Join(settings.Path, "bip.txt")
-	buf, err := ioutil.ReadFile(name)
-	if err != nil {
-		return emptyFN
-	}
+	buf, _ := ioutil.ReadFile(name)
 	blackIpList := scanBuf(buf)
 
 	name = filepath.Join(settings.Path, "wip.txt")
-	buf, err = ioutil.ReadFile(name)
-	if err != nil {
-		return emptyFN
-	}
+	buf, _ = ioutil.ReadFile(name)
 	whiteIpList := scanBuf(buf)
-	if blackIpList.NumRanges() == 0 {
-		return emptyFN
-	}
 
 	if blackIpList.NumRanges() == 0 && whiteIpList.NumRanges() == 0 {
 		return emptyFN
@@ -50,7 +40,7 @@ func Blocker() gin.HandlerFunc {
 			minifyIP(&ip)
 			if whiteIpList.NumRanges() > 0 {
 				if _, ok := whiteIpList.Lookup(ip); !ok {
-					log.TLogln("Block ip, not in white list", ip.String())
+					log.WebLogln("Block ip, not in white list", ip.String())
 					c.String(http.StatusTeapot, "Banned")
 					c.Abort()
 					return
@@ -58,7 +48,7 @@ func Blocker() gin.HandlerFunc {
 			}
 			if blackIpList.NumRanges() > 0 {
 				if r, ok := blackIpList.Lookup(ip); ok {
-					log.TLogln("Block ip, in black list:", ip.String(), "in range", r.Description, ":", r.First, "-", r.Last)
+					log.WebLogln("Block ip, in black list:", ip.String(), "in range", r.Description, ":", r.First, "-", r.Last)
 					c.String(http.StatusTeapot, "Banned")
 					c.Abort()
 					return
@@ -69,14 +59,17 @@ func Blocker() gin.HandlerFunc {
 	}
 }
 
-func scanBuf(buf []byte) iplist.Ranger {
+func scanBuf(buf []byte) Ranger {
+	if len(buf) == 0 {
+		return New(nil)
+	}
+	var ranges []Range
 	scanner := bufio.NewScanner(strings.NewReader(string(buf)))
-	var ranges []iplist.Range
 	for scanner.Scan() {
 		r, ok, err := parseLine(scanner.Bytes())
 		if err != nil {
 			log.TLogln("Error scan ip list:", err)
-			return iplist.New(nil)
+			return New(nil)
 		}
 		if ok {
 			ranges = append(ranges, r)
@@ -87,12 +80,12 @@ func scanBuf(buf []byte) iplist.Ranger {
 		log.TLogln("Error scan ip list:", err)
 	}
 	if len(ranges) > 0 {
-		return iplist.New(ranges)
+		return New(ranges)
 	}
-	return iplist.New(nil)
+	return New(nil)
 }
 
-func parseLine(l []byte) (r iplist.Range, ok bool, err error) {
+func parseLine(l []byte) (r Range, ok bool, err error) {
 	l = bytes.TrimSpace(l)
 	if len(l) == 0 || bytes.HasPrefix(l, []byte("#")) {
 		return
@@ -119,11 +112,4 @@ func parseLine(l []byte) (r iplist.Range, ok bool, err error) {
 	}
 	ok = true
 	return
-}
-
-func minifyIP(ip *net.IP) {
-	v4 := ip.To4()
-	if v4 != nil {
-		*ip = append(make([]byte, 0, 4), v4...)
-	}
 }
